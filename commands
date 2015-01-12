@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+PLUGIN_NAME='restart-policy'
+if [[ $1 == $PLUGIN_NAME ]] || [[ $1 == $PLUGIN_NAME:* ]]; then 
+    [[ -z $2 ]] && echo "Please specify an app" && exit 1
+    [[ ! -d "$DOKKU_ROOT/$2" ]] && echo "App '$2' does not exist" && exit 1
+    APP=$2
+    RESTART_POLICY_FILE="RESTART_POLICY"
+    RESTART_POLICY_FILE_PATH="$DOKKU_ROOT/$APP/$RESTART_POLICY_FILE"
+fi
+
+case "$1" in
+    restart-policy)
+        if [[ -a $RESTART_POLICY_FILE_PATH ]]; then
+            cat $RESTART_POLICY_FILE_PATH
+        else
+            echo No restart policy currently set.
+        fi
+        ;;
+    restart-policy:set)
+        [[ -z $3 ]] && echo "Must specify a restart policy for this app: https://docs.docker.com/reference/commandline/cli/#restart-policies" && exit 1            
+        
+        echo $3 > "$RESTART_POLICY_FILE_PATH"
+        ;;
+    restart-policy:delete)
+        rm $RESTART_POLICY_FILE_PATH
+        ;;
+    help)
+        cat && cat<<EOF
+    restart-policy <app>                                    Displays current restart policy for <app>
+    restart-policy:set <app> <policy>                       Sets docker restart policy for <app> (either always, no, on-failure)
+    restart-policy:remove <app>                             Removes restart policy for <app>
+EOF
+        ;;  
+    *)
+        exit $DOKKU_NOT_IMPLEMENTED_EXIT
+        ;;
+esac
+

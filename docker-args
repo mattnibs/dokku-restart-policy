@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+STDIN=$(cat)
+APP=$1
+CMD=$2
+RESTART_POLICY_FILE="RESTART_POLICY"
+RESTART_POLICY_FILE_PATH="$DOKKU_ROOT/$APP/$RESTART_POLICY_FILE"
+
+policy=""
+if [[ $CMD == "deploy" ]] && [[ -a $RESTART_POLICY_FILE_PATH ]]; then
+    policy=' --restart='$(cat $RESTART_POLICY_FILE_PATH)
+fi
+
+echo $STDIN$policy
